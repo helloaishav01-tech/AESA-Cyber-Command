@@ -1,10 +1,4 @@
-streamlit==1.53.1
-crewai==1.9.3
-litellm==1.81.6
+streamlit
+crewai
+litellm
 groq
-langchain-community==0.4.1
-langchain-core==1.2.8
-openai==1.83.0
-pydantic==2.11.10
-python-dotenv==1.1.1
-requests==2.32.5
