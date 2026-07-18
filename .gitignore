@@ -1,9 +1,22 @@
-.streamlit/secrets.toml
-venv/
-.venv/
-__pycache__/
-*.py[cod]
+﻿# Secrets — never commit these
+backend/.env
+frontend/.env
 .env
-.DS_Store
-Thumbs.db
+
+# Python
+backend/venv/
+__pycache__/
 *.pyc
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+
+# Debug/credentials artifact — local dev only, never shipped
+memory/test_credentials.md
+
+# Editor/OS
+.vscode/
+*.log
+Thumbs.db
