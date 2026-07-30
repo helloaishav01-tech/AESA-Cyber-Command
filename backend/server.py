@@ -1,4 +1,4 @@
-"""
+﻿"""
 Main FastAPI application - wires together db, auth, schemas, and the
 CrewAI agents into a running API.
 """
@@ -32,6 +32,7 @@ from models.schemas import UserRegister, UserLogin, LogAnalysisRequest, LogAnaly
 from crewai import Crew, LLM
 from agents.investigator import create_investigator_agent, create_investigator_task
 from agents.admin import create_admin_agent, create_admin_task
+from utils.threat_intel import check_ip_reputation
 
 
 @asynccontextmanager
@@ -190,6 +191,10 @@ async def analyze_logs(request: Request, body: LogAnalysisRequest):
     if inv is None or rem is None:
         raise HTTPException(status_code=502, detail="AI returned an unexpected format. Please try again.")
 
+    # Cross-check the AI's finding against real-world threat intel -
+    # never fails the whole request if this one check has trouble
+    threat_intel = await check_ip_reputation(inv.source_ip)
+
     timeline_data = [{"time_estimate": e.time_estimate, "event": e.event} for e in inv.timeline]
 
     doc = {
@@ -205,6 +210,7 @@ async def analyze_logs(request: Request, body: LogAnalysisRequest):
         "root_cause": inv.root_cause,
         "mitre_techniques": inv.mitre_techniques,
         "risk_score": {"score": inv.risk_score.score, "factors": inv.risk_score.factors},
+        "threat_intel": threat_intel.model_dump(),
         "mitigation_commands": rem.mitigation_commands,
         "timestamp": datetime.now(timezone.utc),
     }
@@ -222,6 +228,7 @@ async def analyze_logs(request: Request, body: LogAnalysisRequest):
         root_cause=inv.root_cause,
         mitre_techniques=inv.mitre_techniques,
         risk_score={"score": inv.risk_score.score, "factors": inv.risk_score.factors},
+        threat_intel=threat_intel.model_dump(),
         mitigation_commands=rem.mitigation_commands,
         timestamp=doc["timestamp"],
         user_id=user["id"],

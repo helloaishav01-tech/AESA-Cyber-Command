@@ -38,6 +38,15 @@ class RiskScoreOut(BaseModel):
     factors: List[str]
 
 
+class ThreatIntelOut(BaseModel):
+    checked: bool
+    is_known_malicious: bool = False
+    abuse_confidence_score: Optional[int] = None
+    total_reports: Optional[int] = None
+    country: Optional[str] = None
+    error: Optional[str] = None
+
+
 class LogAnalysisResponse(BaseModel):
     id: str
     threat_type: str
@@ -50,6 +59,7 @@ class LogAnalysisResponse(BaseModel):
     root_cause: List[str]
     mitre_techniques: List[str]
     risk_score: RiskScoreOut
+    threat_intel: ThreatIntelOut
     mitigation_commands: List[str]
     timestamp: datetime
     user_id: str
