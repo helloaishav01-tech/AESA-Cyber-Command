@@ -33,6 +33,7 @@ from crewai import Crew, LLM
 from agents.investigator import create_investigator_agent, create_investigator_task
 from agents.admin import create_admin_agent, create_admin_task
 from utils.threat_intel import check_ip_reputation
+from utils.email_alerts import send_critical_alert
 
 
 @asynccontextmanager
@@ -191,8 +192,6 @@ async def analyze_logs(request: Request, body: LogAnalysisRequest):
     if inv is None or rem is None:
         raise HTTPException(status_code=502, detail="AI returned an unexpected format. Please try again.")
 
-    # Cross-check the AI's finding against real-world threat intel -
-    # never fails the whole request if this one check has trouble
     threat_intel = await check_ip_reputation(inv.source_ip)
 
     timeline_data = [{"time_estimate": e.time_estimate, "event": e.event} for e in inv.timeline]
@@ -215,6 +214,18 @@ async def analyze_logs(request: Request, body: LogAnalysisRequest):
         "timestamp": datetime.now(timezone.utc),
     }
     result = await db.analyses.insert_one(doc)
+
+    # Fire-and-forget alert - never blocks or fails the actual response
+    if inv.severity == "critical":
+        try:
+            await send_critical_alert(
+                threat_type=inv.threat_type,
+                source_ip=inv.source_ip,
+                summary=inv.summary,
+                risk_score=inv.risk_score.score,
+            )
+        except Exception as e:
+            print(f"WARNING: Critical alert failed: {e}")
 
     return LogAnalysisResponse(
         id=str(result.inserted_id),
