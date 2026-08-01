@@ -34,6 +34,7 @@ from agents.investigator import create_investigator_agent, create_investigator_t
 from agents.admin import create_admin_agent, create_admin_task
 from utils.threat_intel import check_ip_reputation
 from utils.email_alerts import send_critical_alert
+from utils.report_generator import generate_report_pdf
 
 
 @asynccontextmanager
@@ -215,7 +216,6 @@ async def analyze_logs(request: Request, body: LogAnalysisRequest):
     }
     result = await db.analyses.insert_one(doc)
 
-    # Fire-and-forget alert - never blocks or fails the actual response
     if inv.severity == "critical":
         try:
             await send_critical_alert(
@@ -258,6 +258,29 @@ async def get_history(request: Request, limit: int = 10):
         a["_id"] = str(a["_id"])
 
     return analyses
+
+
+@app.get("/api/analyze/{analysis_id}/report")
+async def download_report(analysis_id: str, request: Request):
+    db = get_db()
+    user = await get_current_user(request, db)
+
+    try:
+        analysis = await db.analyses.find_one({"_id": ObjectId(analysis_id), "user_id": user["id"]})
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid analysis ID")
+
+    if not analysis:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+
+    analysis["mitre_techniques"] = [m.replace("&", "and") for m in analysis.get("mitre_techniques", [])]
+    pdf_bytes = generate_report_pdf(analysis)
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="AESA_Report_{analysis_id}.pdf"'},
+    )
 
 
 if __name__ == "__main__":
