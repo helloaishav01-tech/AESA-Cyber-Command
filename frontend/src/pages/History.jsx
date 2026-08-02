@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Shield, AlertTriangle, AlertOctagon, ArrowLeft, Clock } from "lucide-react";
+import { Shield, AlertTriangle, AlertOctagon, ArrowLeft, Clock, ChevronRight } from "lucide-react";
 import api from "../lib/api";
 
 const SEVERITY_ICON = { safe: Shield, warning: AlertTriangle, critical: AlertOctagon };
@@ -48,7 +48,11 @@ export default function History() {
           const Icon = SEVERITY_ICON[a.severity] || Shield;
           const color = SEVERITY_COLOR[a.severity] || "text-status-safe";
           return (
-            <div key={a._id} className="bg-surface border border-white/10 rounded-lg p-4 flex items-center gap-4">
+            <Link
+              key={a._id}
+              to={`/history/${a._id}`}
+              className="bg-surface border border-white/10 rounded-lg p-4 flex items-center gap-4 hover:border-white/30 transition-colors"
+            >
               <Icon className={`w-6 h-6 flex-shrink-0 ${color}`} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
@@ -61,7 +65,8 @@ export default function History() {
                 <Clock className="w-3 h-3" />
                 {new Date(a.timestamp).toLocaleDateString()}
               </div>
-            </div>
+              <ChevronRight className="w-4 h-4 text-text-secondary flex-shrink-0" />
+            </Link>
           )
         })}
       </div>

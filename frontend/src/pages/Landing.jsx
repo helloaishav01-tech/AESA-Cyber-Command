@@ -20,6 +20,9 @@ export default function Landing() {
           <span className="font-sans font-bold tracking-tight">AESA</span>
         </div>
         <div className="flex items-center gap-3">
+          <Link to="/pricing" className="text-sm text-text-secondary hover:text-text-primary px-3 py-2">
+            Pricing
+          </Link>
           <Link to="/login" className="text-sm text-text-secondary hover:text-text-primary px-3 py-2">
             Sign In
           </Link>
@@ -82,3 +85,4 @@ export default function Landing() {
     </div>
   )
 }
+
