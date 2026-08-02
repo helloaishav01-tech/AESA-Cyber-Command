@@ -17,6 +17,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from utils.db import connect_db, close_db, get_db
+import jwt
 from utils.auth import (
     hash_password,
     verify_password,
@@ -138,6 +139,27 @@ async def login(request: Request, credentials: UserLogin, response: Response):
     user_id = str(user["_id"])
     _set_auth_cookies(response, user_id, email)
     return {"id": user_id, "email": user["email"], "name": user["name"], "role": user.get("role", "user")}
+
+
+@app.post("/api/auth/refresh")
+async def refresh_token(request: Request, response: Response):
+    token = request.cookies.get("refresh_token")
+    if not token:
+        raise HTTPException(status_code=401, detail="No refresh token")
+    try:
+        payload = jwt.decode(token, os.environ["JWT_SECRET"], algorithms=["HS256"])
+        if payload.get("type") != "refresh":
+            raise HTTPException(status_code=401, detail="Invalid token type")
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
+
+    db = get_db()
+    user = await db.users.find_one({"_id": ObjectId(payload["sub"])})
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+
+    _set_auth_cookies(response, str(user["_id"]), user["email"])
+    return {"refreshed": True}
 
 
 @app.get("/api/auth/me")
@@ -286,3 +308,4 @@ async def download_report(analysis_id: str, request: Request):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("server:app", host="0.0.0.0", port=8001, reload=True)
+

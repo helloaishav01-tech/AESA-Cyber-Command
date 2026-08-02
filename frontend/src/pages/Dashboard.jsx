@@ -1,5 +1,6 @@
 ﻿import { useState } from "react";
-import { LogOut, Shield, Upload } from "lucide-react";
+import { Link } from "react-router-dom";
+import { LogOut, Shield, Upload, History as HistoryIcon } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import DynamicBackground from "../components/DynamicBackground";
 import AnalysisResults from "../components/AnalysisResults";
@@ -35,6 +36,9 @@ export default function Dashboard() {
           <span className="font-sans font-bold tracking-tight">AESA</span>
         </div>
         <div className="flex items-center gap-4">
+          <Link to="/history" className="text-sm text-text-secondary hover:text-text-primary flex items-center gap-1.5">
+            <HistoryIcon className="w-4 h-4" /> History
+          </Link>
           <span className="text-sm text-text-secondary">{user?.name}</span>
           <button
             onClick={logout}
