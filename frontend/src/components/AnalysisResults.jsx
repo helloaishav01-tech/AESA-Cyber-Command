@@ -151,7 +151,8 @@ export default function AnalysisResults({ result }) {
 
       {/* Remediation terminal panel */}
       {result.mitigation_commands?.length > 0 && (
-        <div className="bg-black border border-status-safe/30 rounded-lg p-5">
+        <div className="relative bg-black border border-status-safe/30 rounded-lg p-5 overflow-hidden">
+          <div className="pointer-events-none absolute inset-0 opacity-20" style={{ backgroundImage: "repeating-linear-gradient(0deg, #82D5E5, #82D5E5 1px, transparent 1px, transparent 4px)" }} />
           <h3 className="text-sm font-bold uppercase tracking-wide mb-3 flex items-center gap-2 text-status-safe">
             <Terminal className="w-4 h-4" /> Remediation Commands
           </h3>
@@ -167,3 +168,5 @@ export default function AnalysisResults({ result }) {
     </div>
   )
 }
+
+
