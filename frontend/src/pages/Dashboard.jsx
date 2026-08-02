@@ -4,6 +4,7 @@ import { LogOut, Shield, Upload, History as HistoryIcon } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import DynamicBackground from "../components/DynamicBackground";
 import AnalysisResults from "../components/AnalysisResults";
+import AnalyzingLoader from "../components/AnalyzingLoader";
 import api, { formatApiError } from "../lib/api";
 
 export default function Dashboard() {
@@ -15,6 +16,7 @@ export default function Dashboard() {
 
   async function handleAnalyze() {
     setError("");
+    setResult(null);
     setLoading(true);
     try {
       const { data } = await api.post("/api/analyze", { log_content: logContent });
@@ -59,7 +61,8 @@ export default function Dashboard() {
             value={logContent}
             onChange={(e) => setLogContent(e.target.value)}
             rows={6}
-            className="w-full bg-bg-base border border-white/10 rounded-lg p-4 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-status-safe/50 focus:border-status-safe"
+            disabled={loading}
+            className="w-full bg-bg-base border border-white/10 rounded-lg p-4 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-status-safe/50 focus:border-status-safe disabled:opacity-60"
             placeholder="Failed password for admin from 192.168.1.100 port 22 ssh2..."
             data-testid="log-content-textarea"
           />
@@ -75,7 +78,8 @@ export default function Dashboard() {
           </button>
         </div>
 
-        {result && <AnalysisResults result={result} />}
+        {loading && <AnalyzingLoader />}
+        {!loading && result && <AnalysisResults result={result} />}
       </main>
     </div>
   )
