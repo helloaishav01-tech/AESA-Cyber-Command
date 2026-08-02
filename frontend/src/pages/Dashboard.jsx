@@ -2,6 +2,7 @@
 import { LogOut, Shield, Upload } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import DynamicBackground from "../components/DynamicBackground";
+import AnalysisResults from "../components/AnalysisResults";
 import api, { formatApiError } from "../lib/api";
 
 export default function Dashboard() {
@@ -70,14 +71,7 @@ export default function Dashboard() {
           </button>
         </div>
 
-        {result && (
-          <div className="bg-surface border border-white/10 rounded-lg p-6" data-testid="analysis-results">
-            <p className="text-text-secondary text-xs mb-2">Raw result (temporary view - polished UI next step)</p>
-            <pre className="font-mono text-xs text-status-safe whitespace-pre-wrap overflow-x-auto">
-              {JSON.stringify(result, null, 2)}
-            </pre>
-          </div>
-        )}
+        {result && <AnalysisResults result={result} />}
       </main>
     </div>
   )
