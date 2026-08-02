@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import DynamicBackground from "../components/DynamicBackground";
 import AnalysisResults from "../components/AnalysisResults";
 import AnalyzingLoader from "../components/AnalyzingLoader";
+import StatsOverview from "../components/StatsOverview";
 import api, { formatApiError } from "../lib/api";
 
 export default function Dashboard() {
@@ -13,6 +14,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState(null);
+  const [statsKey, setStatsKey] = useState(0);
 
   async function handleAnalyze() {
     setError("");
@@ -21,6 +23,7 @@ export default function Dashboard() {
     try {
       const { data } = await api.post("/api/analyze", { log_content: logContent });
       setResult(data);
+      setStatsKey((k) => k + 1);
     } catch (err) {
       setError(formatApiError(err));
     } finally {
@@ -32,7 +35,7 @@ export default function Dashboard() {
     <div className="min-h-screen">
       <DynamicBackground severity={result?.severity || "safe"} />
 
-      <header className="border-b border-white/10 px-6 py-4 flex items-center justify-between">
+      <header className="sticky top-0 z-10 backdrop-blur-xl bg-bg-base/70 border-b border-white/10 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Shield className="w-6 h-6 text-status-safe" />
           <span className="font-sans font-bold tracking-tight">AESA</span>
@@ -53,7 +56,9 @@ export default function Dashboard() {
       </header>
 
       <main className="p-6 max-w-4xl mx-auto">
-        <h1 className="font-sans text-2xl font-bold mb-6">Security Log Analysis</h1>
+        <h1 className="font-sans text-2xl font-bold mb-6">Security Operations Center</h1>
+
+        <StatsOverview key={statsKey} />
 
         <div className="bg-surface border border-white/10 rounded-lg p-6 mb-6">
           <label className="block text-sm text-text-secondary mb-2">Paste security log data</label>
