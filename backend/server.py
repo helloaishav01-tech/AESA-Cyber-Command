@@ -282,6 +282,24 @@ async def get_history(request: Request, limit: int = 10):
     return analyses
 
 
+@app.get("/api/analyze/{analysis_id}")
+async def get_analysis(analysis_id: str, request: Request):
+    db = get_db()
+    user = await get_current_user(request, db)
+
+    try:
+        analysis = await db.analyses.find_one({"_id": ObjectId(analysis_id), "user_id": user["id"]})
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid analysis ID")
+
+    if not analysis:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+
+    analysis["id"] = str(analysis["_id"])
+    del analysis["_id"]
+    return analysis
+
+
 @app.get("/api/analyze/{analysis_id}/report")
 async def download_report(analysis_id: str, request: Request):
     db = get_db()
@@ -308,4 +326,5 @@ async def download_report(analysis_id: str, request: Request):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("server:app", host="0.0.0.0", port=8001, reload=True)
+
 
