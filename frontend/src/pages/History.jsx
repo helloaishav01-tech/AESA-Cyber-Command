@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Shield, AlertTriangle, AlertOctagon, ArrowLeft, Clock, ChevronRight } from "lucide-react";
+import { Shield, AlertTriangle, AlertOctagon, ArrowLeft, Clock, ChevronRight, Search } from "lucide-react";
 import api from "../lib/api";
 
 const SEVERITY_ICON = { safe: Shield, warning: AlertTriangle, critical: AlertOctagon };
@@ -10,6 +10,8 @@ export default function History() {
   const [analyses, setAnalyses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
+  const [severityFilter, setSeverityFilter] = useState("all");
 
   useEffect(() => {
     loadHistory();
@@ -17,7 +19,7 @@ export default function History() {
 
   async function loadHistory() {
     try {
-      const { data } = await api.get("/api/history?limit=20");
+      const { data } = await api.get("/api/history?limit=50");
       setAnalyses(data);
     } catch {
       setError("Could not load history. Please try again.");
@@ -26,6 +28,15 @@ export default function History() {
     }
   }
 
+  const filtered = analyses.filter((a) => {
+    const matchesSearch =
+      !search ||
+      a.threat_type.toLowerCase().includes(search.toLowerCase()) ||
+      a.forensic_summary?.toLowerCase().includes(search.toLowerCase());
+    const matchesSeverity = severityFilter === "all" || a.severity === severityFilter;
+    return matchesSearch && matchesSeverity;
+  });
+
   return (
     <div className="min-h-screen p-6 max-w-4xl mx-auto">
       <Link to="/dashboard" className="inline-flex items-center gap-2 text-sm text-text-secondary hover:text-text-primary mb-6">
@@ -33,6 +44,31 @@ export default function History() {
       </Link>
 
       <h1 className="font-sans text-2xl font-bold mb-6">Analysis History</h1>
+
+      <div className="flex gap-3 mb-6 flex-wrap">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by threat type or summary..."
+            className="w-full bg-surface border border-white/10 rounded-lg pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-status-safe/50 focus:border-status-safe"
+            data-testid="history-search-input"
+          />
+        </div>
+        <select
+          value={severityFilter}
+          onChange={(e) => setSeverityFilter(e.target.value)}
+          className="bg-surface border border-white/10 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-status-safe/50"
+          data-testid="history-severity-filter"
+        >
+          <option value="all">All Severities</option>
+          <option value="safe">Safe</option>
+          <option value="warning">Warning</option>
+          <option value="critical">Critical</option>
+        </select>
+      </div>
 
       {loading && <p className="text-text-secondary text-sm">Loading...</p>}
       {error && <p className="text-status-critical text-sm">{error}</p>}
@@ -43,8 +79,14 @@ export default function History() {
         </div>
       )}
 
+      {!loading && analyses.length > 0 && filtered.length === 0 && (
+        <div className="bg-surface border border-white/10 rounded-lg p-8 text-center text-text-secondary text-sm">
+          No results match your search or filter.
+        </div>
+      )}
+
       <div className="space-y-3" data-testid="history-list">
-        {analyses.map((a) => {
+        {filtered.map((a) => {
           const Icon = SEVERITY_ICON[a.severity] || Shield;
           const color = SEVERITY_COLOR[a.severity] || "text-status-safe";
           return (
