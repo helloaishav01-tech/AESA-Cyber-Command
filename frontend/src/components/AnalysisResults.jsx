@@ -1,7 +1,8 @@
 ﻿import { useState } from "react";
+import { toast } from "sonner";
 import {
   Shield, AlertTriangle, AlertOctagon, Clock, Target,
-  Gauge, Terminal, Download, Globe, CheckCircle2
+  Gauge, Terminal, Download, Globe, CheckCircle2, Copy, Check
 } from "lucide-react";
 import api from "../lib/api";
 
@@ -10,6 +11,34 @@ const SEVERITY_CONFIG = {
   warning: { icon: AlertTriangle, color: "text-status-warning", bg: "bg-status-warning/10", border: "border-status-warning/40" },
   critical: { icon: AlertOctagon, color: "text-status-critical", bg: "bg-status-critical/10", border: "border-status-critical/40" },
 };
+
+function CopyableCommand({ cmd }) {
+  const [copied, setCopied] = useState(false);
+
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(cmd);
+      setCopied(true);
+      toast.success("Command copied to clipboard");
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Could not copy - try selecting the text manually");
+    }
+  }
+
+  return (
+    <div className="group flex items-center justify-between gap-3 text-status-safe">
+      <span><span className="text-text-secondary">$</span> {cmd}</span>
+      <button
+        onClick={handleCopy}
+        className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 p-1.5 hover:bg-white/10 rounded"
+        title="Copy command"
+      >
+        {copied ? <Check className="w-3.5 h-3.5 text-status-safe" /> : <Copy className="w-3.5 h-3.5 text-text-secondary" />}
+      </button>
+    </div>
+  )
+}
 
 export default function AnalysisResults({ result }) {
   const [downloading, setDownloading] = useState(false);
@@ -26,8 +55,9 @@ export default function AnalysisResults({ result }) {
       link.download = `AESA_Report_${result.id}.pdf`;
       link.click();
       window.URL.revokeObjectURL(url);
+      toast.success("Report downloaded");
     } catch {
-      alert("Could not download report. Please try again.");
+      toast.error("Could not download report. Please try again.");
     } finally {
       setDownloading(false);
     }
@@ -35,7 +65,6 @@ export default function AnalysisResults({ result }) {
 
   return (
     <div className="space-y-4" data-testid="analysis-results">
-      {/* Header: severity + threat type + download */}
       <div className={`rounded-lg border ${config.border} ${config.bg} p-5 flex items-center justify-between flex-wrap gap-4`}>
         <div className="flex items-center gap-3">
           <SeverityIcon className={`w-8 h-8 ${config.color}`} />
@@ -55,7 +84,6 @@ export default function AnalysisResults({ result }) {
         </button>
       </div>
 
-      {/* Summary + confidence */}
       <div className="bg-surface border border-white/10 rounded-lg p-5">
         <p className="text-sm leading-relaxed mb-4">{result.forensic_summary}</p>
         <div className="flex items-center gap-2 text-xs text-text-secondary border-t border-white/10 pt-3">
@@ -78,7 +106,6 @@ export default function AnalysisResults({ result }) {
         )}
       </div>
 
-      {/* Timeline */}
       {result.timeline?.length > 0 && (
         <div className="bg-surface border border-white/10 rounded-lg p-5">
           <h3 className="text-sm font-bold uppercase tracking-wide mb-4 flex items-center gap-2">
@@ -95,7 +122,6 @@ export default function AnalysisResults({ result }) {
         </div>
       )}
 
-      {/* Root cause + MITRE, side by side on wider screens */}
       <div className="grid md:grid-cols-2 gap-4">
         {result.root_cause?.length > 0 && (
           <div className="bg-surface border border-white/10 rounded-lg p-5">
@@ -126,7 +152,6 @@ export default function AnalysisResults({ result }) {
         )}
       </div>
 
-      {/* Risk score */}
       {result.risk_score && (
         <div className="bg-surface border border-white/10 rounded-lg p-5">
           <div className="flex items-center justify-between mb-3">
@@ -149,18 +174,15 @@ export default function AnalysisResults({ result }) {
         </div>
       )}
 
-      {/* Remediation terminal panel */}
       {result.mitigation_commands?.length > 0 && (
         <div className="relative bg-black border border-status-safe/30 rounded-lg p-5 overflow-hidden">
           <div className="pointer-events-none absolute inset-0 opacity-20" style={{ backgroundImage: "repeating-linear-gradient(0deg, #82D5E5, #82D5E5 1px, transparent 1px, transparent 4px)" }} />
-          <h3 className="text-sm font-bold uppercase tracking-wide mb-3 flex items-center gap-2 text-status-safe">
+          <h3 className="text-sm font-bold uppercase tracking-wide mb-3 flex items-center gap-2 text-status-safe relative">
             <Terminal className="w-4 h-4" /> Remediation Commands
           </h3>
-          <div className="space-y-2 font-mono text-sm">
+          <div className="space-y-2 font-mono text-sm relative">
             {result.mitigation_commands.map((cmd, i) => (
-              <div key={i} className="text-status-safe">
-                <span className="text-text-secondary">$</span> {cmd}
-              </div>
+              <CopyableCommand key={i} cmd={cmd} />
             ))}
           </div>
         </div>
@@ -168,5 +190,3 @@ export default function AnalysisResults({ result }) {
     </div>
   )
 }
-
-
